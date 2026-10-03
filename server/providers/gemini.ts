@@ -1,4 +1,4 @@
-import { ProviderError, type VisionProvider } from "./types";
+import { ProviderError, type VisionProvider } from "./types.js";
 
 /**
  * Google Gemini via the REST generateContent endpoint.

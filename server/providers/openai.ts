@@ -1,4 +1,4 @@
-import { ProviderError, type VisionProvider } from "./types";
+import { ProviderError, type VisionProvider } from "./types.js";
 
 /**
  * Any OpenAI-compatible chat-completions API with image input:

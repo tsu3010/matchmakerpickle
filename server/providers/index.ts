@@ -1,6 +1,6 @@
-import { gemini } from "./gemini";
-import { openaiCompatible } from "./openai";
-import { ProviderError, type Env, type VisionProvider } from "./types";
+import { gemini } from "./gemini.js";
+import { openaiCompatible } from "./openai.js";
+import { ProviderError, type Env, type VisionProvider } from "./types.js";
 
 /** Register new providers here; pick one with the VISION_PROVIDER env var. */
 const PROVIDERS: Record<string, VisionProvider> = {

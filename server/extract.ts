@@ -1,6 +1,6 @@
-import { EXTRACT_PROMPT } from "./prompt";
-import { getProvider } from "./providers";
-import { ProviderError, type Env, type InputImage } from "./providers/types";
+import { EXTRACT_PROMPT } from "./prompt.js";
+import { getProvider } from "./providers/index.js";
+import { ProviderError, type Env, type InputImage } from "./providers/types.js";
 
 export interface ExtractedRow {
   name: string;
