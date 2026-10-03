@@ -1,4 +1,4 @@
-import { ProviderError, type VisionProvider } from "./types.js";
+import { ProviderError, fetchWithRetry, type VisionProvider } from "./types.js";
 
 /**
  * Google Gemini via the REST generateContent endpoint.
@@ -12,7 +12,7 @@ export const gemini: VisionProvider = {
   async run(prompt, images, env) {
     const model = env.GEMINI_MODEL || "gemini-3.8-flash";
     const base = (env.GEMINI_BASE_URL || "https://generativelanguage.googleapis.com/v1beta").replace(/\/$/, "");
-    const res = await fetch(`${base}/models/${encodeURIComponent(model)}:generateContent`, {
+    const { status, text } = await fetchWithRetry(`${base}/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY! },
       body: JSON.stringify({
@@ -27,15 +27,14 @@ export const gemini: VisionProvider = {
         ],
       }),
     });
-    const text = await res.text();
-    if (!res.ok) {
+    if (status < 200 || status >= 300) {
       let msg = text.slice(0, 300);
       try {
         msg = JSON.parse(text)?.error?.message ?? msg;
       } catch {
         /* keep raw */
       }
-      throw new ProviderError(`Gemini error ${res.status}: ${msg}`, res.status === 429 ? 429 : 502);
+      throw new ProviderError(`Gemini error ${status}: ${msg}`, status === 429 ? 429 : 502);
     }
     const json = JSON.parse(text);
     const parts: { text?: string }[] = json?.candidates?.[0]?.content?.parts ?? [];

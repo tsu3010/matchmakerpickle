@@ -23,3 +23,22 @@ export class ProviderError extends Error {
     super(message);
   }
 }
+
+const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * fetch() with retry + exponential backoff on transient upstream failures
+ * (rate limits, overload, gateway errors). Callers keep their own status/body handling.
+ */
+export async function fetchWithRetry(url: string, init: RequestInit, attempts = 3): Promise<{ status: number; text: string }> {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, init);
+    const text = await res.text();
+    if (res.ok || !RETRYABLE_STATUSES.has(res.status) || attempt >= attempts - 1) return { status: res.status, text };
+    await sleep(400 * 2 ** attempt + Math.random() * 200);
+  }
+}

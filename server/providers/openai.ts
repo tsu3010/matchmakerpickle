@@ -1,4 +1,4 @@
-import { ProviderError, type VisionProvider } from "./types.js";
+import { ProviderError, fetchWithRetry, type VisionProvider } from "./types.js";
 
 /**
  * Any OpenAI-compatible chat-completions API with image input:
@@ -13,7 +13,7 @@ export const openaiCompatible: VisionProvider = {
   },
   async run(prompt, images, env) {
     const base = (env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "");
-    const res = await fetch(`${base}/chat/completions`, {
+    const { status, text } = await fetchWithRetry(`${base}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.OPENAI_API_KEY}` },
       body: JSON.stringify({
@@ -29,15 +29,14 @@ export const openaiCompatible: VisionProvider = {
         ],
       }),
     });
-    const text = await res.text();
-    if (!res.ok) {
+    if (status < 200 || status >= 300) {
       let msg = text.slice(0, 300);
       try {
         msg = JSON.parse(text)?.error?.message ?? msg;
       } catch {
         /* keep raw */
       }
-      throw new ProviderError(`Vision API error ${res.status}: ${msg}`, res.status === 429 ? 429 : 502);
+      throw new ProviderError(`Vision API error ${status}: ${msg}`, status === 429 ? 429 : 502);
     }
     const out = JSON.parse(text)?.choices?.[0]?.message?.content;
     if (typeof out !== "string" || !out) throw new ProviderError("Vision API returned no text.");
